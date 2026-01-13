@@ -1,0 +1,53 @@
+/* Global Styles */
+body {
+  background-color: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  border: none;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.btn-primary {
+  background-color: #0066cc;
+  border-color: #0066cc;
+}
+
+.btn-primary:hover {
+  background-color: #0052a3;
+  border-color: #0052a3;
+}
+
+.badge {
+  padding: 0.5rem 0.75rem;
+}
+
+.table {
+  font-size: 0.95rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0066cc;
+  box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+}
+
+/* Alerts */
+.alert {
+  border-radius: 0.25rem;
+}
+
+/* Modal */
+.modal-header {
+  border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+  border-top: 1px solid #dee2e6;
+}
