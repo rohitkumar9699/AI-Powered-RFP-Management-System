@@ -52,15 +52,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'rfp_management.wsgi.application'
 
-# Database Configuration
+# Database Configuration - Using SQLite for development
 DATABASES = {
     'default': {
-        'ENGINE': 'djongo',
-        'NAME': 'rfp_management',
-        'ENFORCE_SCHEMA_VALIDATION': False,
-        'CLIENT': {
-            'host': os.getenv('MONGODB_URI', 'mongodb://localhost:27017/rfp_management'),
-        }
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 

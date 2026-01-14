@@ -1,11 +1,9 @@
 """Vendors app - models for vendor management"""
 from django.db import models
-from djongo import models as mongo_models
 
 
 class Vendor(models.Model):
     """Model for managing vendor information"""
-    id = mongo_models.ObjectIdField()
     name = models.CharField(max_length=255)
     email = models.EmailField()
     contact_person = models.CharField(max_length=255, blank=True)
