@@ -1,11 +1,48 @@
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h4>RFPs Management</h4>
-    <button class="btn btn-primary btn-sm">Create RFP</button>
+    <button class="btn btn-primary btn-sm" (click)="toggleForm()" [disabled]="isLoading">
+      {{ showForm ? 'Cancel' : 'Create RFP' }}
+    </button>
   </div>
   
   <div class="card-body">
-    <div *ngIf="rfps.length > 0; else noRfps">
+    <!-- Create/Edit RFP Form -->
+    <div *ngIf="showForm" class="card bg-light mb-4">
+      <div class="card-body">
+        <h5>{{ selectedRFP ? 'Edit RFP' : 'Create New RFP' }}</h5>
+        <form (ngSubmit)="createRFP()">
+          <div class="mb-3">
+            <label>Title *</label>
+            <input type="text" class="form-control" [(ngModel)]="newRFP.title" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label>Description *</label>
+            <textarea class="form-control" [(ngModel)]="newRFP.description" name="description" rows="4" required></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Budget</label>
+              <input type="number" class="form-control" [(ngModel)]="newRFP.budget" name="budget">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Deadline</label>
+              <input type="date" class="form-control" [(ngModel)]="newRFP.deadline" name="deadline">
+            </div>
+          </div>
+          <div class="mb-3">
+            <label>Requirements</label>
+            <textarea class="form-control" [(ngModel)]="newRFP.requirements" name="requirements" rows="3"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success" [disabled]="isLoading">
+            {{ isLoading ? 'Saving...' : (selectedRFP ? 'Update RFP' : 'Create RFP') }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- RFPs List -->
+    <div *ngIf="rfps.length > 0 && !showForm; else noRfps">
       <div class="row">
         <div *ngFor="let rfp of rfps" class="col-md-6 mb-4">
           <div class="card">
@@ -33,9 +70,9 @@
               </div>
 
               <div class="btn-group btn-group-sm w-100" role="group">
-                <button type="button" class="btn btn-outline-primary">View</button>
-                <button type="button" class="btn btn-outline-info">Edit</button>
-                <button type="button" class="btn btn-outline-danger">Delete</button>
+                <button type="button" class="btn btn-outline-primary" (click)="viewRFP(rfp)" [disabled]="isLoading">View</button>
+                <button type="button" class="btn btn-outline-info" (click)="editRFP(rfp)" [disabled]="isLoading">Edit</button>
+                <button type="button" class="btn btn-outline-danger" (click)="deleteRFP(rfp)" [disabled]="isLoading">Delete</button>
               </div>
             </div>
           </div>

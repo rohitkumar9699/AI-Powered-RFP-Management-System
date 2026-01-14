@@ -41,6 +41,18 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/rfps/${id}/`);
   }
 
+  createRFP(rfp: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/rfps/`, rfp);
+  }
+
+  updateRFP(id: string, rfp: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/rfps/${id}/`, rfp);
+  }
+
+  deleteRFP(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/rfps/${id}/`);
+  }
+
   createRFPFromNaturalLanguage(description: string): Observable<any> {
     return this.http.post(`${this.apiUrl}/rfps/create_from_natural_language/`, { description });
   }
