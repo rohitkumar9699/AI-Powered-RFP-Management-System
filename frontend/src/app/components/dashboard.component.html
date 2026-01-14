@@ -1,0 +1,83 @@
+<div class="row">
+  <div class="col-md-3 mb-4">
+    <div class="card bg-primary text-white">
+      <div class="card-body">
+        <h5 class="card-title">Total Vendors</h5>
+        <h2 class="card-text">{{ vendorCount }}</h2>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card bg-success text-white">
+      <div class="card-body">
+        <h5 class="card-title">Active RFPs</h5>
+        <h2 class="card-text">{{ rfpCount }}</h2>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card bg-info text-white">
+      <div class="card-body">
+        <h5 class="card-title">Total Proposals</h5>
+        <h2 class="card-text">{{ proposalCount }}</h2>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card bg-warning text-dark">
+      <div class="card-body">
+        <h5 class="card-title">Average Score</h5>
+        <h2 class="card-text">{{ averageScore.toFixed(1) }}</h2>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Recent RFPs</h5>
+      </div>
+      <div class="card-body">
+        <div *ngIf="rfps.length > 0; else noRfps">
+          <div *ngFor="let rfp of rfps.slice(0, 5)" class="mb-3 pb-3 border-bottom">
+            <h6>{{ rfp.title }}</h6>
+            <small class="text-muted">Budget: ${{ rfp.budget | number }}</small>
+            <span class="badge ms-2" [ngClass]="{'bg-success': rfp.status === 'SENT', 'bg-warning': rfp.status === 'DRAFT'}">
+              {{ rfp.status }}
+            </span>
+          </div>
+        </div>
+        <ng-template #noRfps>
+          <p class="text-muted">No RFPs available</p>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Top Vendors</h5>
+      </div>
+      <div class="card-body">
+        <div *ngIf="vendors.length > 0; else noVendors">
+          <div *ngFor="let vendor of vendors.slice(0, 5)" class="mb-2">
+            <div class="d-flex justify-content-between">
+              <strong>{{ vendor.name }}</strong>
+              <span class="badge bg-success">Active</span>
+            </div>
+            <small class="text-muted">{{ vendor.city }}, {{ vendor.country }}</small>
+          </div>
+        </div>
+        <ng-template #noVendors>
+          <p class="text-muted">No vendors available</p>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</div>

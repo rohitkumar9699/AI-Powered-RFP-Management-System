@@ -88,6 +88,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:4200',
     'http://localhost:3000',
     'http://127.0.0.1:4200',
+    'https://bookish-telegram-9rr4qpgpr9rcx7r-4200.app.github.dev',
 ]
 
 # Email Configuration

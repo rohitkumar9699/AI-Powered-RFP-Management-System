@@ -1,0 +1,56 @@
+<div class="card">
+  <div class="card-header">
+    <h4>Proposals Management</h4>
+  </div>
+  
+  <div class="card-body">
+    <div *ngIf="proposals.length > 0; else noProposals">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-light">
+            <tr>
+              <th>Vendor</th>
+              <th>RFP</th>
+              <th>Price</th>
+              <th>Score</th>
+              <th>Status</th>
+              <th>Delivery</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let proposal of proposals">
+              <td><strong>{{ proposal.vendor_name }}</strong></td>
+              <td>RFP {{ proposal.rfp_id }}</td>
+              <td>${{ proposal.price | number:'1.0-0' }}</td>
+              <td>
+                <span class="badge" [ngClass]="getScoreBadge(proposal.score)">
+                  {{ proposal.score | number:'1.1-1' }}/100
+                </span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="getStatusBadge(proposal.status)">
+                  {{ proposal.status }}
+                </span>
+              </td>
+              <td>{{ proposal.delivery_time }}</td>
+              <td>
+                <button class="btn btn-sm btn-info" (click)="viewProposal(proposal)">View</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <ng-template #noProposals>
+      <div class="alert alert-info">No proposals found yet.</div>
+    </ng-template>
+
+    <div class="mt-3">
+      <small class="text-muted">
+        Total Proposals: {{ proposals.length }} | 
+        Average Score: {{ averageScore.toFixed(1) }}/100
+      </small>
+    </div>
+  </div>
+</div>

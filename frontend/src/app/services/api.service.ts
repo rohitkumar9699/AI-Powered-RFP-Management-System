@@ -6,7 +6,8 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = 'https://bookish-telegram-9rr4qpgpr9rcx7r-8000.app.github.dev/api';
+
 
   constructor(private http: HttpClient) {}
 
@@ -57,8 +58,11 @@ export class ApiService {
   }
 
   // Proposal endpoints
-  getProposals(rfpId: string): Observable<any> {
-    return this.http.get(`${this.apiUrl}/proposals/?rfp_id=${rfpId}`);
+  getProposals(rfpId: string = ''): Observable<any> {
+    if (rfpId) {
+      return this.http.get(`${this.apiUrl}/proposals/?rfp_id=${rfpId}`);
+    }
+    return this.http.get(`${this.apiUrl}/proposals/`);
   }
 
   getProposal(id: string): Observable<any> {
