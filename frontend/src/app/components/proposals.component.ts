@@ -1,22 +1,30 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../services/api.service';
 
 @Component({
   selector: 'app-proposals',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './proposals.component.html',
   styleUrls: ['./proposals.component.scss']
 })
 export class ProposalsComponent implements OnInit {
   proposals: any[] = [];
+  rfps: any[] = [];
   averageScore = 0;
+  isLoading = false;
+  selectedRFPId = '';
+  evaluationResult: any = null;
+  showEvaluation = false;
+  checkingEmails = false;
 
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadProposals();
+    this.loadRFPs();
   }
 
   loadProposals() {
@@ -31,6 +39,71 @@ export class ProposalsComponent implements OnInit {
         }
       },
       error: (err) => console.error('Error loading proposals:', err)
+    });
+  }
+
+  loadRFPs() {
+    this.apiService.getRFPs().subscribe({
+      next: (response: any) => {
+        this.rfps = response.results || [];
+      },
+      error: (err) => console.error('Error loading RFPs:', err)
+    });
+  }
+
+  checkForEmails() {
+    this.checkingEmails = true;
+    this.apiService.checkProposalEmails().subscribe({
+      next: (response: any) => {
+        this.checkingEmails = false;
+        alert(`Checked emails. Found ${response.proposals_received?.length || 0} new proposals.`);
+        this.loadProposals();
+      },
+      error: (err) => {
+        this.checkingEmails = false;
+        console.error('Error checking emails:', err);
+        alert('Error checking emails: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  evaluateProposals() {
+    if (!this.selectedRFPId) {
+      alert('Please select an RFP to evaluate');
+      return;
+    }
+
+    this.isLoading = true;
+    this.apiService.compareProposals(this.selectedRFPId).subscribe({
+      next: (response: any) => {
+        this.evaluationResult = response;
+        this.showEvaluation = true;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Error evaluating proposals:', err);
+        alert('Error evaluating proposals: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  parseProposal(proposal: any) {
+    this.isLoading = true;
+    this.apiService.parseProposal(proposal.id).subscribe({
+      next: (response: any) => {
+        const index = this.proposals.findIndex(p => p.id === proposal.id);
+        if (index !== -1) {
+          this.proposals[index] = response;
+        }
+        this.isLoading = false;
+        alert('Proposal parsed successfully!');
+      },
+      error: (err) => {
+        this.isLoading = false;
+        console.error('Error parsing proposal:', err);
+        alert('Error parsing proposal: ' + (err.error?.error || err.message));
+      }
     });
   }
 
@@ -55,6 +128,6 @@ export class ProposalsComponent implements OnInit {
   }
 
   viewProposal(proposal: any) {
-    alert(`Proposal from ${proposal.vendor_name} - Score: ${proposal.score}/100\n\nPrice: $${proposal.price}\nDelivery: ${proposal.delivery_time}`);
+    alert(`Proposal from ${proposal.vendor_name} - Score: ${proposal.score || 'N/A'}/100\n\nPrice: $${proposal.price}\nDelivery: ${proposal.delivery_time}\nWarranty: ${proposal.warranty || 'N/A'}`);
   }
 }

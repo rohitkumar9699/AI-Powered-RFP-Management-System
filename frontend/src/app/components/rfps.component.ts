@@ -12,9 +12,13 @@ import { ApiService } from '../services/api.service';
 })
 export class RFpsComponent implements OnInit {
   rfps: any[] = [];
+  vendors: any[] = [];
   showForm = false;
+  showNLForm = false;
+  showSendForm = false;
   isLoading = false;
   selectedRFP: any = null;
+  selectedVendors: Set<string> = new Set();
   
   newRFP = {
     title: '',
@@ -24,10 +28,13 @@ export class RFpsComponent implements OnInit {
     requirements: ''
   };
 
+  naturalLanguageInput = '';
+
   constructor(private apiService: ApiService) {}
 
   ngOnInit() {
     this.loadRFPs();
+    this.loadVendors();
   }
 
   loadRFPs() {
@@ -40,6 +47,17 @@ export class RFpsComponent implements OnInit {
       error: (err) => {
         console.error('Error loading RFPs:', err);
         this.isLoading = false;
+      }
+    });
+  }
+
+  loadVendors() {
+    this.apiService.getVendors().subscribe({
+      next: (response: any) => {
+        this.vendors = response.results || [];
+      },
+      error: (err) => {
+        console.error('Error loading vendors:', err);
       }
     });
   }
@@ -108,6 +126,88 @@ export class RFpsComponent implements OnInit {
         }
       });
     }
+  }
+
+  createFromNaturalLanguage() {
+    if (!this.naturalLanguageInput.trim()) {
+      alert('Please enter a description of your procurement need');
+      return;
+    }
+
+    this.isLoading = true;
+
+    this.apiService.createRFPFromNaturalLanguage(this.naturalLanguageInput).subscribe({
+      next: (response: any) => {
+        this.rfps.unshift(response);
+        this.naturalLanguageInput = '';
+        this.showNLForm = false;
+        this.isLoading = false;
+        alert('RFP created from natural language successfully!');
+      },
+      error: (err) => {
+        console.error('Error creating RFP:', err);
+        this.isLoading = false;
+        alert('Error creating RFP: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  toggleNLForm() {
+    this.showNLForm = !this.showNLForm;
+    if (!this.showNLForm) {
+      this.naturalLanguageInput = '';
+    }
+  }
+
+  toggleSendForm(rfp: any) {
+    if (this.showSendForm && this.selectedRFP?.id === rfp.id) {
+      this.showSendForm = false;
+      this.selectedRFP = null;
+      this.selectedVendors.clear();
+    } else {
+      this.showSendForm = true;
+      this.selectedRFP = rfp;
+      this.selectedVendors.clear();
+    }
+  }
+
+  toggleVendor(vendorId: string) {
+    if (this.selectedVendors.has(vendorId)) {
+      this.selectedVendors.delete(vendorId);
+    } else {
+      this.selectedVendors.add(vendorId);
+    }
+  }
+
+  sendToVendors() {
+    if (this.selectedVendors.size === 0) {
+      alert('Please select at least one vendor');
+      return;
+    }
+
+    this.isLoading = true;
+    const vendorIds = Array.from(this.selectedVendors);
+
+    this.apiService.sendRFPToVendors(String(this.selectedRFP.id), vendorIds).subscribe({
+      next: (response: any) => {
+        // Update RFP in list
+        const index = this.rfps.findIndex(r => r.id === this.selectedRFP.id);
+        if (index !== -1) {
+          this.rfps[index] = response.rfp || response;
+        }
+        
+        this.isLoading = false;
+        this.showSendForm = false;
+        this.selectedVendors.clear();
+        this.selectedRFP = null;
+        alert('RFP sent to vendors successfully!');
+      },
+      error: (err) => {
+        console.error('Error sending RFP:', err);
+        this.isLoading = false;
+        alert('Error sending RFP: ' + (err.error?.error || err.message));
+      }
+    });
   }
 
   resetForm() {

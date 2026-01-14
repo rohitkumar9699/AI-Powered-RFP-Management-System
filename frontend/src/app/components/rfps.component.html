@@ -1,16 +1,41 @@
 <div class="card">
   <div class="card-header d-flex justify-content-between align-items-center">
     <h4>RFPs Management</h4>
-    <button class="btn btn-primary btn-sm" (click)="toggleForm()" [disabled]="isLoading">
-      {{ showForm ? 'Cancel' : 'Create RFP' }}
-    </button>
+    <div class="btn-group btn-group-sm" role="group">
+      <button class="btn btn-success btn-sm" (click)="toggleNLForm()" [disabled]="isLoading">
+        {{ showNLForm ? 'Cancel NL' : '✨ From Text' }}
+      </button>
+      <button class="btn btn-primary btn-sm" (click)="toggleForm()" [disabled]="isLoading">
+        {{ showForm ? 'Cancel' : '+ Manual' }}
+      </button>
+    </div>
   </div>
   
   <div class="card-body">
+    <!-- Natural Language RFP Form -->
+    <div *ngIf="showNLForm" class="card bg-light mb-4">
+      <div class="card-body">
+        <h5>Create RFP from Natural Language</h5>
+        <p class="text-muted small">Describe your procurement needs in plain English and we'll automatically create an RFP structure.</p>
+        <div class="mb-3">
+          <label>Describe your procurement need *</label>
+          <textarea 
+            class="form-control" 
+            [(ngModel)]="naturalLanguageInput" 
+            name="nlInput"
+            placeholder="Example: We need 100 units of industrial-grade laptops with 16GB RAM, SSD storage, and 3-year warranty. Budget is $150,000 and we need delivery by end of Q2..."
+            rows="5"></textarea>
+        </div>
+        <button type="button" class="btn btn-success" (click)="createFromNaturalLanguage()" [disabled]="isLoading">
+          {{ isLoading ? 'Processing...' : 'Create RFP from Text' }}
+        </button>
+      </div>
+    </div>
+
     <!-- Create/Edit RFP Form -->
     <div *ngIf="showForm" class="card bg-light mb-4">
       <div class="card-body">
-        <h5>{{ selectedRFP ? 'Edit RFP' : 'Create New RFP' }}</h5>
+        <h5>{{ selectedRFP ? 'Edit RFP' : 'Create New RFP (Manual)' }}</h5>
         <form (ngSubmit)="createRFP()">
           <div class="mb-3">
             <label>Title *</label>
@@ -42,7 +67,7 @@
     </div>
 
     <!-- RFPs List -->
-    <div *ngIf="rfps.length > 0 && !showForm; else noRfps">
+    <div *ngIf="rfps.length > 0 && !showForm && !showNLForm; else noRfps">
       <div class="row">
         <div *ngFor="let rfp of rfps" class="col-md-6 mb-4">
           <div class="card">
@@ -69,9 +94,38 @@
                 </small>
               </div>
 
+              <!-- Send to Vendors Form -->
+              <div *ngIf="showSendForm && selectedRFP?.id === rfp.id" class="card bg-warning bg-opacity-10 mb-3">
+                <div class="card-body">
+                  <h6>Select Vendors to Send RFP:</h6>
+                  <div *ngIf="vendors.length > 0">
+                    <div *ngFor="let vendor of vendors" class="form-check">
+                      <input 
+                        class="form-check-input" 
+                        type="checkbox" 
+                        [id]="'vendor-' + vendor.id"
+                        [checked]="selectedVendors.has(vendor.id)"
+                        (change)="toggleVendor(vendor.id)">
+                      <label class="form-check-label" [for]="'vendor-' + vendor.id">
+                        {{ vendor.name }} ({{ vendor.email }})
+                      </label>
+                    </div>
+                    <button type="button" class="btn btn-warning btn-sm mt-3" (click)="sendToVendors()" [disabled]="selectedVendors.size === 0 || isLoading">
+                      {{ isLoading ? 'Sending...' : 'Send to Selected Vendors' }}
+                    </button>
+                  </div>
+                  <div *ngIf="vendors.length === 0" class="alert alert-info mt-2">
+                    No vendors available. Create vendors first.
+                  </div>
+                </div>
+              </div>
+
               <div class="btn-group btn-group-sm w-100" role="group">
                 <button type="button" class="btn btn-outline-primary" (click)="viewRFP(rfp)" [disabled]="isLoading">View</button>
                 <button type="button" class="btn btn-outline-info" (click)="editRFP(rfp)" [disabled]="isLoading">Edit</button>
+                <button type="button" class="btn btn-outline-warning" (click)="toggleSendForm(rfp)" [disabled]="isLoading" [disabled]="rfp.status === 'SENT' || rfp.status === 'AWARDED'">
+                  {{ showSendForm && selectedRFP?.id === rfp.id ? 'Cancel Send' : 'Send' }}
+                </button>
                 <button type="button" class="btn btn-outline-danger" (click)="deleteRFP(rfp)" [disabled]="isLoading">Delete</button>
               </div>
             </div>
