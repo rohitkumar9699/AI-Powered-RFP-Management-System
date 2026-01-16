@@ -28,6 +28,21 @@ class ProposalViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(proposals, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=['get'])
+    def by_vendor(self, request):
+        """Get all proposals for a specific vendor"""
+        vendor_id = request.query_params.get('vendor_id')
+        
+        if not vendor_id:
+            return Response(
+                {'error': 'vendor_id query parameter is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        proposals = Proposal.objects.filter(vendor_id=vendor_id).order_by('-received_at')
+        serializer = self.get_serializer(proposals, many=True)
+        return Response(serializer.data)
+
     @action(detail=True, methods=['post'])
     def parse(self, request, pk=None):
         """Parse proposal content using AI"""
@@ -45,6 +60,55 @@ class ProposalViewSet(viewsets.ModelViewSet):
             proposal.status = 'PARSED'
             proposal.save()
 
+            serializer = self.get_serializer(proposal)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        """Accept a proposal and send acceptance email"""
+        proposal = self.get_object()
+        
+        try:
+            # Update proposal status
+            proposal.status = 'ACCEPTED'
+            proposal.save()
+            
+            # Send acceptance email
+            from rfp_management.apps.email_service.services import EmailService
+            from rfp_management.apps.vendors.models import Vendor
+            email_service = EmailService()
+            
+            # Get RFP details
+            rfp = RFP.objects.get(id=proposal.rfp_id)
+            
+            # Get vendor email
+            vendor = Vendor.objects.get(id=proposal.vendor_id)
+            
+            # Send acceptance email to vendor
+            subject = f"Proposal Accepted: {rfp.title}"
+            body = f"""
+Dear {proposal.vendor_name},
+
+Congratulations! Your proposal for "{rfp.title}" has been accepted.
+
+Proposal Details:
+- RFP: {rfp.title}
+- Your Price: ${proposal.price or 'N/A'}
+- Delivery Time: {proposal.delivery_time or 'N/A'}
+
+We will be in touch soon with next steps.
+
+Best regards,
+Procurement Team
+"""
+            
+            email_service._send_email(vendor.email, subject, body)
+            
             serializer = self.get_serializer(proposal)
             return Response(serializer.data)
         except Exception as e:

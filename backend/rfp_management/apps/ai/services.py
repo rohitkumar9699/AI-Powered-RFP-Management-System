@@ -1,23 +1,17 @@
-"""AI Services - Integration with OpenAI for NLP tasks"""
+"""AI Services - Integration with Ollama for NLP tasks"""
 import os
 import json
 from datetime import datetime, timedelta
-from openai import OpenAI
+import ollama
 import re
 
 
 class AIService:
-    """Service for AI-powered tasks using OpenAI"""
+    """Service for AI-powered tasks using Ollama"""
 
     def __init__(self):
-        """Initialize OpenAI client"""
-        self.api_key = os.getenv('OPENAI_API_KEY')
-        self.model = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
-        
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
-        
-        self.client = OpenAI(api_key=self.api_key)
+        """Initialize Ollama client"""
+        self.model = os.getenv('OLLAMA_MODEL', 'tinyllama')
 
     def parse_natural_language_to_rfp(self, natural_language_input: str) -> dict:
         """
@@ -43,35 +37,39 @@ Please extract and structure the following information:
 5. Payment Terms: Payment terms specified
 6. Warranty/Support: Any warranty or support requirements
 
-Return ONLY a valid JSON object with the following structure:
+Return ONLY a valid JSON object with this exact structure:
 {{
     "title": "RFP Title",
     "requirements": {{
         "items": [
-            {{"name": "item name", "quantity": number, "specifications": "specs"}}
+            {{"name": "laptop", "quantity": 50, "specifications": "16GB RAM"}}
         ],
-        "delivery_timeline": "timeline",
-        "location": "location if mentioned",
-        "payment_terms": "terms",
-        "warranty": "warranty info"
+        "delivery_timeline": "30 days",
+        "payment_terms": "net 30",
+        "warranty": "1 year"
     }},
-    "budget": null or number,
-    "deadline": "YYYY-MM-DD or null"
+    "budget": 100000,
+    "deadline": "2026-02-15"
 }}
+
+Do not add extra fields or explanations. Just the JSON.
 """
 
         try:
-            response = self.client.chat.completions.create(
+            response = ollama.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert RFP analyst. Always return valid JSON."},
                     {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                max_tokens=2000
+                ]
             )
 
-            response_text = response.choices[0].message.content.strip()
+            response_text = response['message']['content'].strip()
+            
+            # Remove any prefix like "JSON Response:" 
+            if '{' in response_text:
+                start_idx = response_text.find('{')
+                response_text = response_text[start_idx:]
             
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
@@ -79,7 +77,7 @@ Return ONLY a valid JSON object with the following structure:
                 rfp_data = json.loads(json_match.group())
             else:
                 rfp_data = json.loads(response_text)
-
+            
             # Ensure deadline is in correct format
             if rfp_data.get('deadline') and rfp_data['deadline'] != 'null':
                 try:
@@ -134,17 +132,15 @@ Return ONLY a valid JSON object with this structure:
 """
 
         try:
-            response = self.client.chat.completions.create(
+            response = ollama.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert proposal parser. Always return valid JSON."},
                     {"role": "user", "content": prompt}
-                ],
-                temperature=0.2,
-                max_tokens=1500
+                ]
             )
 
-            response_text = response.choices[0].message.content.strip()
+            response_text = response['message']['content'].strip()
             
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
@@ -211,17 +207,15 @@ Return ONLY a valid JSON object with this structure:
 """
 
         try:
-            response = self.client.chat.completions.create(
+            response = ollama.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert procurement evaluator. Always return valid JSON."},
                     {"role": "user", "content": prompt}
-                ],
-                temperature=0.3,
-                max_tokens=2500
+                ]
             )
 
-            response_text = response.choices[0].message.content.strip()
+            response_text = response['message']['content'].strip()
             
             # Extract JSON from response
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
@@ -270,17 +264,15 @@ Return ONLY the email body text, no subject line.
 """
 
         try:
-            response = self.client.chat.completions.create(
+            response = ollama.chat(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are an expert at writing professional RFP emails."},
                     {"role": "user", "content": prompt}
-                ],
-                temperature=0.5,
-                max_tokens=2000
+                ]
             )
 
-            return response.choices[0].message.content.strip()
+            return response['message']['content'].strip()
 
         except Exception as e:
             raise Exception(f"Error generating RFP email: {str(e)}")

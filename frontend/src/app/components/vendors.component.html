@@ -7,11 +7,11 @@
   </div>
   
   <div class="card-body">
-    <!-- Add Vendor Form -->
+    <!-- Add/Edit Vendor Form -->
     <div *ngIf="showForm" class="card bg-light mb-4">
       <div class="card-body">
-        <h5>Add New Vendor</h5>
-        <form (ngSubmit)="addVendor()">
+        <h5>{{ isEditMode ? 'Edit Vendor' : 'Add New Vendor' }}</h5>
+        <form (ngSubmit)="submitForm()">
           <div class="row">
             <div class="col-md-6 mb-3">
               <label>Name *</label>
@@ -42,9 +42,10 @@
               <input type="text" class="form-control" [(ngModel)]="newVendor.country" name="country">
             </div>
           </div>
-          <button type="submit" class="btn btn-success" [disabled]="isLoading">
-            {{ isLoading ? 'Creating...' : 'Create Vendor' }}
+          <button type="submit" class="btn btn-success me-2" [disabled]="isLoading">
+            {{ isLoading ? (isEditMode ? 'Updating...' : 'Creating...') : (isEditMode ? 'Update Vendor' : 'Create Vendor') }}
           </button>
+          <button type="button" class="btn btn-secondary" (click)="toggleForm()">Cancel</button>
         </form>
       </div>
     </div>

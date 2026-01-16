@@ -13,6 +13,8 @@ import { ApiService } from '../services/api.service';
 export class VendorsComponent implements OnInit {
   vendors: any[] = [];
   showForm = false;
+  isEditMode = false;
+  editingVendor: any = null;
   isLoading = false;
   
   newVendor = {
@@ -50,12 +52,14 @@ export class VendorsComponent implements OnInit {
     this.showForm = !this.showForm;
     if (!this.showForm) {
       this.resetForm();
+      this.isEditMode = false;
+      this.editingVendor = null;
     }
   }
 
   addVendor() {
     if (!this.newVendor.name || !this.newVendor.email) {
-      alert('Please fill in required fields');
+      this.showErrorModal('Please fill in required fields');
       return;
     }
 
@@ -66,33 +70,81 @@ export class VendorsComponent implements OnInit {
         this.resetForm();
         this.showForm = false;
         this.isLoading = false;
-        alert('Vendor created successfully!');
+        this.showSuccessModal('Vendor created successfully!');
       },
       error: (err) => {
         console.error('Error creating vendor:', err);
         this.isLoading = false;
-        alert('Error creating vendor');
+        this.showErrorModal('Error creating vendor');
       }
     });
   }
 
+  submitForm() {
+    if (this.isEditMode) {
+      this.updateVendor();
+    } else {
+      this.addVendor();
+    }
+  }
+
   editVendor(vendor: any) {
-    alert('Edit functionality coming soon!');
+    this.editingVendor = vendor;
+    this.isEditMode = true;
+    this.newVendor = {
+      name: vendor.name,
+      email: vendor.email,
+      contact_person: vendor.contact_person || '',
+      phone: vendor.phone || '',
+      city: vendor.city || '',
+      country: vendor.country || '',
+      website: vendor.website || '',
+      notes: vendor.notes || ''
+    };
+    this.showForm = true;
+  }
+
+  updateVendor() {
+    if (!this.newVendor.name || !this.newVendor.email) {
+      this.showErrorModal('Please fill in required fields');
+      return;
+    }
+
+    this.isLoading = true;
+    this.apiService.updateVendor(String(this.editingVendor.id), this.newVendor).subscribe({
+      next: (response: any) => {
+        const index = this.vendors.findIndex(v => v.id === this.editingVendor.id);
+        if (index !== -1) {
+          this.vendors[index] = response;
+        }
+        this.resetForm();
+        this.showForm = false;
+        this.isEditMode = false;
+        this.editingVendor = null;
+        this.isLoading = false;
+        this.showSuccessModal('Vendor updated successfully!');
+      },
+      error: (err) => {
+        console.error('Error updating vendor:', err);
+        this.isLoading = false;
+        this.showErrorModal('Error updating vendor');
+      }
+    });
   }
 
   deleteVendor(id: number) {
-    if (confirm('Are you sure you want to delete this vendor?')) {
+    this.showConfirmModal('Delete Vendor', 'Are you sure you want to delete this vendor? This action cannot be undone.', 'Delete', () => {
       this.apiService.deleteVendor(String(id)).subscribe({
         next: () => {
           this.vendors = this.vendors.filter(v => v.id !== id);
-          alert('Vendor deleted successfully!');
+          this.showSuccessModal('Vendor deleted successfully!');
         },
         error: (err) => {
           console.error('Error deleting vendor:', err);
-          alert('Error deleting vendor');
+          this.showErrorModal('Error deleting vendor');
         }
       });
-    }
+    });
   }
 
   resetForm() {
@@ -106,5 +158,88 @@ export class VendorsComponent implements OnInit {
       website: '',
       notes: ''
     };
+  }
+
+  showConfirmModal(title: string, message: string, actionText: string, action: () => void) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.setAttribute('data-action', 'confirm');
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">${title}</h5>
+            <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <p>${message}</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmActionBtn">${actionText}</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    `;
+    document.body.appendChild(modal);
+    
+    // Store the action and attach event listener
+    (modal as any)._action = action;
+    const actionBtn = modal.querySelector('#confirmActionBtn') as HTMLButtonElement;
+    actionBtn.addEventListener('click', () => {
+      modal.remove();
+      action();
+    });
+  }
+
+  showSuccessModal(message: string) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Success</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <p>${message}</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success" onclick="this.closest('.modal').remove()">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    `;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.remove(), 3000);
+  }
+
+  showErrorModal(message: string) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Error</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <p>${message}</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="this.closest('.modal').remove()">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    `;
+    document.body.appendChild(modal);
   }
 }

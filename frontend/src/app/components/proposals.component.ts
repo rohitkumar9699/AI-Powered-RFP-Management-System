@@ -19,6 +19,16 @@ export class ProposalsComponent implements OnInit {
   evaluationResult: any = null;
   showEvaluation = false;
   checkingEmails = false;
+  
+  // Modal properties
+  showViewModal = false;
+  showConfirmModal = false;
+  selectedProposal: any = null;
+  confirmTitle = '';
+  confirmMessage = '';
+  confirmActionText = '';
+  confirmType = '';
+  pendingAction: () => void = () => {};
 
   constructor(private apiService: ApiService) {}
 
@@ -56,20 +66,20 @@ export class ProposalsComponent implements OnInit {
     this.apiService.checkProposalEmails().subscribe({
       next: (response: any) => {
         this.checkingEmails = false;
-        alert(`Checked emails. Found ${response.proposals_received?.length || 0} new proposals.`);
+        this.showSuccessModal(`Checked emails. Found ${response.proposals_received?.length || 0} new proposals.`);
         this.loadProposals();
       },
       error: (err) => {
         this.checkingEmails = false;
         console.error('Error checking emails:', err);
-        alert('Error checking emails: ' + (err.error?.error || err.message));
+        this.showErrorModal('Error checking emails: ' + (err.error?.error || err.message));
       }
     });
   }
 
   evaluateProposals() {
     if (!this.selectedRFPId) {
-      alert('Please select an RFP to evaluate');
+      this.showErrorModal('Please select an RFP to evaluate');
       return;
     }
 
@@ -83,7 +93,7 @@ export class ProposalsComponent implements OnInit {
       error: (err) => {
         this.isLoading = false;
         console.error('Error evaluating proposals:', err);
-        alert('Error evaluating proposals: ' + (err.error?.error || err.message));
+        this.showErrorModal('Error evaluating proposals: ' + (err.error?.error || err.message));
       }
     });
   }
@@ -97,12 +107,12 @@ export class ProposalsComponent implements OnInit {
           this.proposals[index] = response;
         }
         this.isLoading = false;
-        alert('Proposal parsed successfully!');
+        this.showSuccessModal('Proposal parsed successfully!');
       },
       error: (err) => {
         this.isLoading = false;
         console.error('Error parsing proposal:', err);
-        alert('Error parsing proposal: ' + (err.error?.error || err.message));
+        this.showErrorModal('Error parsing proposal: ' + (err.error?.error || err.message));
       }
     });
   }
@@ -122,12 +132,134 @@ export class ProposalsComponent implements OnInit {
         return 'bg-warning text-dark';
       case 'EVALUATED':
         return 'bg-success';
+      case 'ACCEPTED':
+        return 'bg-success';
       default:
         return 'bg-primary';
     }
   }
 
   viewProposal(proposal: any) {
-    alert(`Proposal from ${proposal.vendor_name} - Score: ${proposal.score || 'N/A'}/100\n\nPrice: $${proposal.price}\nDelivery: ${proposal.delivery_time}\nWarranty: ${proposal.warranty || 'N/A'}`);
+    this.selectedProposal = proposal;
+    this.showViewModal = true;
+  }
+
+  acceptProposal(proposal: any) {
+    this.selectedProposal = proposal;
+    this.confirmTitle = 'Accept Proposal';
+    this.confirmMessage = `Are you sure you want to accept the proposal from ${proposal.vendor_name}?`;
+    this.confirmActionText = 'Accept';
+    this.confirmType = 'accept';
+    this.pendingAction = () => this.executeAcceptProposal();
+    this.showConfirmModal = true;
+  }
+
+  deleteProposal(proposal: any) {
+    this.selectedProposal = proposal;
+    this.confirmTitle = 'Delete Proposal';
+    this.confirmMessage = `Are you sure you want to delete the proposal from ${proposal.vendor_name}? This action cannot be undone.`;
+    this.confirmActionText = 'Delete';
+    this.confirmType = 'delete';
+    this.pendingAction = () => this.executeDeleteProposal();
+    this.showConfirmModal = true;
+  }
+
+  executeAcceptProposal() {
+    this.apiService.acceptProposal(this.selectedProposal.id).subscribe({
+      next: (response: any) => {
+        const index = this.proposals.findIndex(p => p.id === this.selectedProposal.id);
+        if (index !== -1) {
+          this.proposals[index] = response;
+        }
+        this.closeConfirmModal();
+        this.showSuccessModal('Proposal accepted successfully! Acceptance email sent to vendor.');
+      },
+      error: (err) => {
+        console.error('Error accepting proposal:', err);
+        this.showErrorModal('Error accepting proposal: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  executeDeleteProposal() {
+    this.apiService.deleteProposal(this.selectedProposal.id).subscribe({
+      next: () => {
+        this.proposals = this.proposals.filter(p => p.id !== this.selectedProposal.id);
+        this.closeConfirmModal();
+        this.showSuccessModal('Proposal deleted successfully!');
+      },
+      error: (err) => {
+        console.error('Error deleting proposal:', err);
+        this.showErrorModal('Error deleting proposal: ' + (err.error?.error || err.message));
+      }
+    });
+  }
+
+  executeConfirmedAction() {
+    this.pendingAction();
+  }
+
+  closeViewModal() {
+    this.showViewModal = false;
+    this.selectedProposal = null;
+  }
+
+  closeConfirmModal() {
+    this.showConfirmModal = false;
+    this.confirmTitle = '';
+    this.confirmMessage = '';
+    this.confirmActionText = '';
+    this.confirmType = '';
+    this.pendingAction = () => {};
+  }
+
+  showSuccessModal(message: string) {
+    // For now, we'll use a simple approach - you can enhance this with a proper modal component
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title">Success</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <p>${message}</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-success" onclick="this.closest('.modal').remove()">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    `;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.remove(), 3000); // Auto-remove after 3 seconds
+  }
+
+  showErrorModal(message: string) {
+    const modal = document.createElement('div');
+    modal.className = 'modal fade show';
+    modal.style.display = 'block';
+    modal.innerHTML = `
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title">Error</h5>
+            <button type="button" class="btn-close btn-close-white" onclick="this.closest('.modal').remove()"></button>
+          </div>
+          <div class="modal-body">
+            <p>${message}</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" onclick="this.closest('.modal').remove()">OK</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-backdrop fade show"></div>
+    `;
+    document.body.appendChild(modal);
   }
 }

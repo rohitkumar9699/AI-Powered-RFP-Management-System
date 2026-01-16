@@ -88,6 +88,18 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/proposals/compare_and_evaluate/`, { rfp_id: rfpId });
   }
 
+  getProposalsByVendor(vendorId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/proposals/by_vendor/?vendor_id=${vendorId}`);
+  }
+
+  acceptProposal(id: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/proposals/${id}/accept/`, {});
+  }
+
+  deleteProposal(id: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/proposals/${id}/`);
+  }
+
   // Email endpoints
   checkProposalEmails(): Observable<any> {
     return this.http.post(`${this.apiUrl}/email/check-proposals/`, {});

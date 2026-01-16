@@ -106,7 +106,7 @@ class EmailServiceViewSet(viewsets.ViewSet):
             str: RFP ID if found, else empty string
         """
         # Try to find RFP ID pattern
-        pattern = r'RFP[:\s]+([a-fA-F0-9]+)'
+        pattern = r'RFP[:\s]+(\d+)'
         
         # Search in subject
         match = re.search(pattern, subject, re.IGNORECASE)

@@ -24,6 +24,7 @@ class Proposal(models.Model):
             ('RECEIVED', 'Received'),
             ('PARSED', 'Parsed'),
             ('EVALUATED', 'Evaluated'),
+            ('ACCEPTED', 'Accepted'),
         ],
         default='RECEIVED'
     )

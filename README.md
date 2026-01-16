@@ -20,12 +20,12 @@ Build an AI-powered RFP Management System that:
 **Backend:**
 - Framework: Django 4.0+ with Django REST Framework
 - Database: SQLite (development) or PostgreSQL (production)
-- AI: OpenAI API (GPT-4-turbo)
+- AI: Ollama with TinyLlama
 - Email: Gmail SMTP (sending) and IMAP (receiving)
 - Language: Python 3.8+
 
 **Frontend:**
-- Framework: Angular 18+
+- Framework: Angular 17+
 - UI: Bootstrap 5.3
 - HTTP: Angular HttpClient
 - State: Component-based with services
@@ -95,8 +95,24 @@ Build an AI-powered RFP Management System that:
 - Node.js 16+
 - npm or yarn
 - Git
-- OpenAI API key
+- Ollama installed with tinyllama model
 - Gmail account with app password
+
+### Ollama Setup
+
+1. **Install Ollama:**
+   - Download and install Ollama from https://ollama.ai/
+
+2. **Pull the TinyLlama model:**
+   ```bash
+   ollama pull tinyllama
+   ```
+
+3. **Verify installation:**
+   ```bash
+   ollama list
+   ```
+   You should see `tinyllama` in the list.
 
 ### Backend Setup
 
@@ -128,11 +144,10 @@ Build an AI-powered RFP Management System that:
    ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
    
    # Database
-   MONGODB_URI=mongodb://localhost:27017/rfp_management
+   # Using SQLite by default
    
-   # OpenAI
-   OPENAI_API_KEY=sk-your-api-key-here
-   OPENAI_MODEL=gpt-4-turbo
+   # Ollama
+   OLLAMA_MODEL=tinyllama
    
    # Gmail
    EMAIL_HOST_USER=your-email@gmail.com
@@ -143,12 +158,13 @@ Build an AI-powered RFP Management System that:
    IMAP_PASSWORD=your-app-specific-password
    ```
 
-5. **Run migrations:**
+6. **Start Ollama server:**
    ```bash
-   python manage.py migrate
+   ollama serve
    ```
+   Keep this running in a separate terminal.
 
-6. **Start backend server:**
+7. **Start backend server:**
    ```bash
    python manage.py runserver 0.0.0.0:8000
    ```
@@ -174,6 +190,81 @@ Build an AI-powered RFP Management System that:
 
 ---
 
+## 🧪 Testing the System
+
+### 1. Create RFP from Natural Language
+- Go to RFPs tab → Click "✨ From Text"
+- Enter: "I need to buy 50 laptops with 16GB RAM, budget $100k, delivery in 30 days"
+- AI will create structured RFP
+
+### 2. Send RFP to Vendors
+- Select vendors from the list
+- Click "Send to Vendors" 
+- System generates professional email and sends via Gmail
+
+### 3. Receive & Parse Proposals
+- Vendors reply to the email
+- Click "Check for Emails" in Proposals tab
+- System automatically parses proposal content using AI
+
+### 4. Compare & Evaluate
+- Select RFP and click "Evaluate Proposals"
+- AI compares all proposals and provides recommendation
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create `.env` file in backend directory:
+
+```env
+DEBUG=True
+SECRET_KEY=your-django-secret-key
+ALLOWED_HOSTS=localhost,127.0.0.1
+
+# Ollama
+OLLAMA_MODEL=tinyllama
+
+# Email (Gmail)
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+IMAP_USERNAME=your-email@gmail.com
+IMAP_PASSWORD=your-app-password
+```
+
+### Gmail Setup
+
+1. Enable 2FA on Gmail account
+2. Generate App Password: https://support.google.com/accounts/answer/185833
+3. Use app password in EMAIL_HOST_PASSWORD and IMAP_PASSWORD
+
+---
+
+## 📊 System Features
+
+✅ **Natural Language RFP Creation** - AI parses procurement needs into structured RFPs  
+✅ **Vendor Management** - CRUD operations for vendor database  
+✅ **Email Integration** - Send RFPs and receive proposals via Gmail  
+✅ **AI Proposal Parsing** - Automatically extract price, terms, specs from emails  
+✅ **Intelligent Comparison** - Score and rank proposals against requirements  
+✅ **Recommendation Engine** - AI suggests best vendor with rationale  
+
+---
+
+## 🚀 Deployment
+
+For production deployment:
+
+1. Use PostgreSQL instead of SQLite
+2. Configure proper email service (SendGrid, AWS SES)
+3. Set up Ollama server separately
+4. Use Docker containers
+5. Configure HTTPS and security settings
+
+---
+
 ## 📱 Features & Workflows
 
 ### 1️⃣ Create RFPs from Natural Language
@@ -192,7 +283,7 @@ Build an AI-powered RFP Management System that:
 **Technical Flow:**
 ```
 User Input → Frontend /rfps/create-from-natural-language/ → 
-OpenAI GPT-4 → AIService.parse_natural_language_to_rfp() → 
+Ollama TinyLlama → AIService.parse_natural_language_to_rfp() → 
 RFP Model created → Response back to Frontend
 ```
 

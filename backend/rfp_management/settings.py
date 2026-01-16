@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-test-key')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,0.0.0.0,testserver').split(',')
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
@@ -106,9 +106,8 @@ IMAP_PORT = int(os.getenv('IMAP_PORT', '993'))
 IMAP_USERNAME = os.getenv('IMAP_USERNAME', '')
 IMAP_PASSWORD = os.getenv('IMAP_PASSWORD', '')
 
-# OpenAI Configuration
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY', '')
-OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
+# Ollama Configuration
+OLLAMA_MODEL = os.getenv('OLLAMA_MODEL', 'tinyllama')
 
 # Email Processing
 EMAIL_CHECK_INTERVAL = int(os.getenv('EMAIL_CHECK_INTERVAL', '300'))
